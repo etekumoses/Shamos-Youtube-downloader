@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import ytdl from "ytdl-core";
+import { exec } from "child_process";
 import path from "path";
-import fs from "fs";
 import { promisify } from "util";
+import fs from "fs";
 
-const writeFile = promisify(fs.writeFile);
+const execPromise = promisify(exec);
 
 export async function POST(req) {
   try {
@@ -13,40 +13,35 @@ export async function POST(req) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
-    console.log(`Fetching video info for: ${url}`);
+    console.log(`Downloading: ${url}`);
 
-    // Validate the YouTube URL
-    if (!ytdl.validateURL(url)) {
-      return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 400 });
+    // Define file name and path (fixed names)
+    const outputDir = path.join(process.cwd(), "public", "downloads");
+    const fileName = format === "mp3" ? "audio.mp3" : "video.mp4";
+    const outputFile = `${outputDir}/${fileName}`;
+
+    // Ensure the downloads folder exists
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // Get video info
-    const info = await ytdl.getInfo(url);
-    let videoTitle = info.videoDetails.title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_");
+    // yt-dlp command for video/audio download
+    let command;
+    if (format === "mp3") {
+      command = `yt-dlp -f bestaudio --extract-audio --audio-format mp3 --audio-quality 320K -o "${outputFile}" "${url}"`;
+    } else {
+      command = `yt-dlp -f best -o "${outputFile}" "${url}"`;
+    }
 
-    console.log(`Video title extracted: ${videoTitle}`);
+    console.log("Executing command:", command);
+    await execPromise(command);
 
-    // Define file name and path
-    const outputDir = path.join(process.cwd(), "public", "downloads");
-    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+    // Check if file exists before returning response
+    if (!fs.existsSync(outputFile)) {
+      return NextResponse.json({ error: "File not found" }, { status: 500 });
+    }
 
-    const fileName = `${videoTitle}.${format === "mp3" ? "mp3" : "mp4"}`;
-    const filePath = path.join(outputDir, fileName);
-
-    // Download video/audio
-    const stream = ytdl(url, {
-      filter: format === "mp3" ? "audioonly" : "videoandaudio",
-      quality: format === "mp3" ? "highestaudio" : "highestvideo",
-    });
-
-    // Save to file
-    const writeStream = fs.createWriteStream(filePath);
-    stream.pipe(writeStream);
-
-    await new Promise((resolve, reject) => {
-      writeStream.on("finish", resolve);
-      writeStream.on("error", reject);
-    });
+    console.log(`Download successful: ${fileName}`);
 
     return NextResponse.json({ downloadUrl: `/downloads/${fileName}` });
   } catch (error) {
