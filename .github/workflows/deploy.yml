@@ -36,7 +36,7 @@ jobs:
 
     - name: Deploy to VM
       run: |
-        gcloud compute ssh $VM_NAME --zone $ZONE --command "
+        gcloud compute ssh shamostechsolutionsltd_gmail_com@$VM_NAME --zone $ZONE --command "
           sudo docker pull us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest &&
           sudo docker stop $CONTAINER_NAME || true &&
           sudo docker rm -f $CONTAINER_NAME || true &&
