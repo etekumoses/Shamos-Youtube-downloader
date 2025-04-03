@@ -35,6 +35,7 @@ jobs:
     - name: Deploy to VM
       run: |
         gcloud compute ssh $VM_NAME --zone $ZONE --command "
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet &&
           sudo docker pull us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/shamos-youtube-downloader-full:latest &&
           sudo docker stop shamos-youtube-downloader-full || true &&
           sudo docker rm -f shamos-youtube-downloader-full || true &&
@@ -42,3 +43,4 @@ jobs:
           sudo docker run -d --name shamos-youtube-downloader-full -p 2000:2000 us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/shamos-youtube-downloader-full:latest &&
           sudo systemctl reload nginx
         "
+
