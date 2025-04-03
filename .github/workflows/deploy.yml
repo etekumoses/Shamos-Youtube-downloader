@@ -14,8 +14,7 @@ jobs:
       VM_NAME: shamosapps
       ZONE: us-central1-b
       REPOSITORY: shamos-youtube-downloader
-      IMAGE_NAME: shamos-youtube-downloader-app
-      CONTAINER_NAME: shamos-youtube-downloader
+      IMAGE_NAME: shamos-youtube-downloader-full
 
     steps:
       - name: Checkout code
@@ -36,11 +35,11 @@ jobs:
 
       - name: Deploy to VM
         run: |
-          gcloud compute ssh shamostechsolutionsltd_gmail_com@$VM_NAME --zone $ZONE --command "
+          gcloud compute ssh $VM_NAME --zone $ZONE --command "
             sudo docker pull us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest &&
-            sudo docker stop $CONTAINER_NAME || true &&
-            sudo docker rm -f $CONTAINER_NAME || true &&
+            sudo docker stop $IMAGE_NAME || true &&
+            sudo docker rm -f $IMAGE_NAME || true &&
             sudo docker system prune -af &&
-            sudo docker run -d --name $CONTAINER_NAME -p 2000:2000 us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest &&
+            sudo docker run -d --name $IMAGE_NAME -p 2000:2000 us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest &&
             sudo systemctl reload nginx
           "
