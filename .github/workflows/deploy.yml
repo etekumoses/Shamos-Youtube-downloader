@@ -43,4 +43,3 @@ jobs:
           sudo docker run -d --name shamos-youtube-downloader-full -p 2000:2000 us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/shamos-youtube-downloader-full:latest &&
           sudo systemctl reload nginx
         "
-
