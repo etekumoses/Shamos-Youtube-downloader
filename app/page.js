@@ -9,6 +9,7 @@ export default function Home() {
 
   const handleDownload = async (format) => {
     if (!url) return setMessage("⚠️ Please enter a YouTube URL");
+
     setLoading(true);
     setMessage("");
 
@@ -16,39 +17,45 @@ export default function Home() {
       const response = await fetch("/api/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, format: format === "mp3" ? "mp3" : "mp4" }), // Force MP3 for audio
+        body: JSON.stringify({ url, format }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setMessage("✅ Download started...");
-
-        // Create a hidden link and trigger download
-        const a = document.createElement("a");
-        a.href = data.downloadUrl;
-        a.download = data.downloadUrl.split("/").pop(); // Extract filename from URL
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        // Reset input field & message after download
-        setTimeout(() => {
-          setMessage("");
-          setUrl("");
-        }, 2000); // Clears message & input after 2 seconds
-      } else {
+      if (!response.ok) {
         setMessage("❌ Failed to download the video.");
+        setLoading(false);
+        return;
       }
+
+      // Get blob from response
+      const blob = await response.blob();
+
+      // Create a download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = format === "mp3" ? "audio.mp3" : "video.mp4";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(downloadUrl);
+
+      setMessage("✅ Download started...");
+      setTimeout(() => {
+        setMessage("");
+        setUrl("");
+      }, 3000);
     } catch (error) {
       console.error("Error:", error);
       setMessage("⚠️ Something went wrong.");
     }
+
     setLoading(false);
   };
 
   return (
     <div className="h-screen flex flex-col items-center justify-center bg-black text-white p-6 relative">
-      {/* Overlay Loader */}
+      {/* Loader */}
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
           <div className="flex flex-col items-center">
@@ -58,10 +65,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Title */}
       <h1 className="text-3xl font-bold mb-6">📥 YouTube Downloader</h1>
 
-      {/* Input Field */}
       <input
         type="text"
         placeholder="Paste YouTube URL here..."
@@ -71,7 +76,6 @@ export default function Home() {
         disabled={loading}
       />
 
-      {/* Buttons */}
       <div className="mt-6 flex gap-4">
         <button
           className="px-6 py-3 border border-white text-white font-semibold rounded-lg transition duration-300 
@@ -91,7 +95,6 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Message Display */}
       {message && (
         <p className="mt-4 text-gray-300 text-lg">{message}</p>
       )}
