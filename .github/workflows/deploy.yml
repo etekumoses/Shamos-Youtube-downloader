@@ -1,4 +1,4 @@
-name: Deploy YouTube Downloader to GCP
+name: Deploy Shamos YouTube Downloader to GCP
 
 on:
   push:
@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PROJECT_ID: kauntabook-3c1cd
-      VM_NAME: shamosapps
+      PROJECT_ID: shamostechsoluti-1691658123783
+      VM_NAME: shamos
       ZONE: us-central1-b
       REPOSITORY: shamos-youtube-downloader
 
