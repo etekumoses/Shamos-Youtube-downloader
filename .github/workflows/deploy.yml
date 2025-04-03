@@ -14,32 +14,31 @@ jobs:
       VM_NAME: shamosapps
       ZONE: us-central1-b
       REPOSITORY: shamos-youtube-downloader
-      IMAGE_NAME: shamos-youtube-downloader-full
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Authenticate with GCP
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+    - name: Authenticate with GCP
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Configure Docker Authentication for Artifact Registry
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+    - name: Configure Docker Authentication for Artifact Registry
+      run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      - name: Build and push Docker image
-        run: |
-          docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest .
-          docker push us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest
+    - name: Build and push Docker image
+      run: |
+        docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/shamos-youtube-downloader-full:latest .
+        docker push us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/shamos-youtube-downloader-full:latest
 
-      - name: Deploy to VM
-        run: |
-          gcloud compute ssh $VM_NAME --zone $ZONE --command "
-            sudo docker pull us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest &&
-            sudo docker stop $IMAGE_NAME || true &&
-            sudo docker rm -f $IMAGE_NAME || true &&
-            sudo docker system prune -af &&
-            sudo docker run -d --name $IMAGE_NAME -p 2000:2000 us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest &&
-            sudo systemctl reload nginx
-          "
+    - name: Deploy to VM
+      run: |
+        gcloud compute ssh $VM_NAME --zone $ZONE --command "
+          sudo docker pull us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/shamos-youtube-downloader-full:latest &&
+          sudo docker stop shamos-youtube-downloader-full || true &&
+          sudo docker rm -f shamos-youtube-downloader-full || true &&
+          sudo docker system prune -af &&
+          sudo docker run -d --name shamos-youtube-downloader-full -p 2000:2000 us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/shamos-youtube-downloader-full:latest &&
+          sudo systemctl reload nginx
+        "
